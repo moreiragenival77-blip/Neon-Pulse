@@ -1,0 +1,25 @@
+{
+  "name": "NEON PULSE MUSIC",
+  "short_name": "NEON PULSE",
+  "description": "Reprodutor de áudio offline moderno com estética synthwave neon e suporte a lista personalizada de faixas locais.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b0c10",
+  "theme_color": "#00f0ff",
+  "categories": ["music", "multimedia", "utilities"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

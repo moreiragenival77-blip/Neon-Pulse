@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111111">
+<title>NEON PULSE MUSIC</title>
+<style>
+:root{color-scheme:dark;--bg:#101010;--panel:#1b1b1b;--line:#383838;--text:#f1f1f1;--muted:#aaa;--accent:#b7f36b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 Arial,Helvetica,sans-serif;padding:env(safe-area-inset-top) 14px env(safe-area-inset-bottom)}
+.app{max-width:620px;margin:0 auto;padding:18px 0 28px}
+header{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--accent);padding:5px 2px 14px}
+.logo{font-weight:800;letter-spacing:2px;font-size:18px}.logo span{color:var(--accent)}
+.tag{font:11px monospace;color:var(--muted);letter-spacing:1px}
+.display{background:#202820;border:1px solid #53634c;border-radius:5px;padding:18px;margin:18px 0;text-align:center;box-shadow:inset 0 0 18px #000}
+.art{width:130px;height:130px;margin:0 auto 14px;border:2px solid #8fa87b;background:repeating-linear-gradient(0deg,#202820,#202820 5px,#263326 6px);display:grid;place-items:center;color:var(--accent);font: bold 32px monospace}
+#title{font-weight:bold;font-size:18px;overflow-wrap:anywhere}#artist{color:#c4d2bd;font-size:13px;margin-top:4px}
+.time{display:flex;justify-content:space-between;color:#c4d2bd;font:12px monospace;margin-top:8px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.controls{display:flex;justify-content:center;align-items:center;gap:12px;margin:14px 0}
+button,.filelabel{background:#252525;border:1px solid #555;color:var(--text);border-radius:5px;padding:11px 14px;font-weight:bold;cursor:pointer}
+button:active,.filelabel:active{background:#3a3a3a}
+button.primary{background:var(--accent);color:#111;border-color:var(--accent);font-size:18px;min-width:58px}
+button.active{border-color:var(--accent);color:var(--accent)}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.filelabel{display:inline-flex;align-items:center;gap:7px}
+input[type=file]{display:none}
+.sectionhead{display:flex;justify-content:space-between;align-items:center;margin:20px 0 8px}
+h2{font-size:13px;letter-spacing:1.5px;margin:0;color:var(--accent)}
+.count{font:12px monospace;color:var(--muted)}
+#trackList{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.track{display:flex;align-items:center;gap:10px;padding:11px 10px;border-bottom:1px solid var(--line);background:var(--panel);min-height:57px}
+.track:last-child{border-bottom:0}.track.playing{border-left:3px solid var(--accent);background:#252b22}
+.drag{color:#777;font-size:18px;cursor:grab;touch-action:none;padding:4px}
+.trackinfo{min-width:0;flex:1;cursor:pointer}.trackname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:bold}.trackmeta{font-size:12px;color:var(--muted)}
+.track button{padding:6px 9px;font-size:12px}
+.empty{padding:22px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:5px}
+footer{text-align:center;color:#777;font:11px monospace;margin-top:22px}
+@media(min-width:500px){body{padding-left:22px;padding-right:22px}.display{padding:22px}.art{width:150px;height:150px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="logo">NEON <span>PULSE</span> MUSIC</div><div class="tag">OFFLINE PLAYER</div></header>
+
+<section class="display" aria-label="Reprodutor">
+  <div class="art" id="art">NPM</div>
+  <div id="title">Nenhuma música selecionada</div>
+  <div id="artist">Adicione arquivos de áudio para começar</div>
+  <input id="seek" type="range" min="0" max="1000" value="0" aria-label="Posição da música">
+  <div class="time"><span id="current">00:00</span><span id="duration">00:00</span></div>
+  <div class="controls">
+    <button id="shuffle" title="Aleatório" aria-label="Aleatório">🔀</button>
+    <button id="prev" aria-label="Faixa anterior">|◀</button>
+    <button class="primary" id="play" aria-label="Reproduzir ou pausar">▶</button>
+    <button id="next" aria-label="Próxima faixa">▶|</button>
+    <button id="repeat" title="Repetir" aria-label="Repetir">🔁</button>
+  </div>
+</section>
+
+<div class="tools">
+  <label class="filelabel">＋ Adicionar músicas<input id="files" type="file" accept="audio/*" multiple></label>
+  <button id="clear">Limpar lista</button>
+</div>
+
+<div class="sectionhead"><h2>MINHAS MÚSICAS</h2><span class="count" id="count">0 faixas</span></div>
+<div id="empty" class="empty">Sua lista está vazia.<br>Toque em “Adicionar músicas” para escolher arquivos do aparelho.</div>
+<ol id="trackList"></ol>
+<footer>NEON PULSE MUSIC · SUAS MÚSICAS, DO SEU JEITO</footer>
+<audio id="audio" preload="metadata"></audio>
+</div>
+<script>
+(() => {
+ const audio=document.getElementById('audio'), filesInput=document.getElementById('files');
+ const listEl=document.getElementById('trackList'), empty=document.getElementById('empty');
+ const titleEl=document.getElementById('title'), artistEl=document.getElementById('artist');
+ const seek=document.getElementById('seek'), currentEl=document.getElementById('current'), durationEl=document.getElementById('duration');
+ let tracks=[], current=-1, shuffle=false, repeat=false, dragIndex=null, objectUrls=[];
+ const DB_KEY='npm-track-order-v1';
+ const fmt=s=>{if(!Number.isFinite(s))return '00:00';let m=Math.floor(s/60),sec=Math.floor(s%60);return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0')};
+ function persist(){try{localStorage.setItem(DB_KEY,JSON.stringify(tracks.map(t=>t.id)))}catch(e){}}
+ function render(){
+  listEl.innerHTML=''; empty.style.display=tracks.length?'none':'block';
+  document.getElementById('count').textContent=tracks.length+' faixa'+(tracks.length===1?'':'s');
+  tracks.forEach((t,i)=>{
+   const li=document.createElement('li');li.className='track'+(i===current?' playing':'');li.draggable=true;li.dataset.index=i;
+   const grip=document.createElement('span');grip.className='drag';grip.textContent='☰';grip.title='Arraste para reorganizar';
+   const info=document.createElement('div');info.className='trackinfo';
+   const name=document.createElement('div');name.className='trackname';name.textContent=t.name;
+   const meta=document.createElement('div');meta.className='trackmeta';meta.textContent=t.fileName;
+   info.append(name,meta);info.addEventListener('click',()=>playIndex(i));
+   const playBtn=document.createElement('button');playBtn.textContent=i===current&&!audio.paused?'Ⅱ':'▶';playBtn.setAttribute('aria-label','Tocar '+t.name);playBtn.onclick=()=>playIndex(i);
+   const up=document.createElement('button');up.textContent='↑';up.title='Mover para cima';up.disabled=i===0;up.onclick=()=>move(i,i-1);
+   const down=document.createElement('button');down.textContent='↓';down.title='Mover para baixo';down.disabled=i===tracks.length-1;down.onclick=()=>move(i,i+1);
+   li.append(grip,info,playBtn,up,down);
+   li.addEventListener('dragstart',e=>{dragIndex=i;e.dataTransfer.effectAllowed='move'});
+   li.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move'});
+   li.addEventListener('drop',e=>{e.preventDefault();const target=Number(li.dataset.index);if(dragIndex!==null)move(dragIndex,target);dragIndex=null});
+   li.addEventListener('dragend',()=>dragIndex=null);
+   listEl.append(li);
+  });
+ }
+ function move(from,to){if(to<0||to>=tracks.length||from===to)return;const activeId=tracks[current]?.id;const [item]=tracks.splice(from,1);tracks.splice(to,0,item);current=tracks.findIndex(t=>t.id===activeId);persist();render()}
+ function playIndex(i){if(i<0||i>=tracks.length)return;current=i;audio.src=tracks[i].url;audio.play().catch(()=>{});updateDisplay();render()}
+ function updateDisplay(){if(current<0){titleEl.textContent='Nenhuma música selecionada';artistEl.textContent='Adicione arquivos de áudio para começar';return}titleEl.textContent=tracks[current].name;artistEl.textContent=tracks[current].fileName;render()}
+ function next(){if(!tracks.length)return;if(repeat&&current>=0){audio.currentTime=0;audio.play();return}let n;if(shuffle&&tracks.length>1){do{n=Math.floor(Math.random()*tracks.length)}while(n===current)}else n=(current+1)%tracks.length;playIndex(n)}
+ filesInput.addEventListener('change',e=>{
+  const selected=[...e.target.files].filter(f=>f.type.startsWith('audio/')||/\.(mp3|wav|flac|aac|ogg|m4a|opus)$/i.test(f.name));
+  selected.forEach(f=>{const url=URL.createObjectURL(f);objectUrls.push(url);tracks.push({id:(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random()),name:f.name.replace(/\.[^.]+$/,''),fileName:f.name,url})});
+  persist();render();if(current<0&&tracks.length)playIndex(0);filesInput.value='';
+ });
+ document.getElementById('play').onclick=()=>{if(current<0){if(tracks.length)playIndex(0);return}if(audio.paused)audio.play().catch(()=>{});else audio.pause()};
+ document.getElementById('prev').onclick=()=>{if(audio.currentTime>3){audio.currentTime=0}else playIndex(Math.max(0,current-1))};
+ document.getElementById('next').onclick=next;
+ document.getElementById('shuffle').onclick=e=>{shuffle=!shuffle;e.currentTarget.classList.toggle('active',shuffle)};
+ document.getElementById('repeat').onclick=e=>{repeat=!repeat;e.currentTarget.classList.toggle('active',repeat)};
+ document.getElementById('clear').onclick=()=>{if(!tracks.length)return;if(!confirm('Remover todas as músicas desta lista?'))return;audio.pause();audio.removeAttribute('src');tracks=[];current=-1;persist();updateDisplay();render();seek.value=0;currentEl.textContent=durationEl.textContent='00:00'};
+ audio.addEventListener('play',()=>{document.getElementById('play').textContent='Ⅱ';render()});
+ audio.addEventListener('pause',()=>{document.getElementById('play').textContent='▶';render()});
+ audio.addEventListener('loadedmetadata',()=>{durationEl.textContent=fmt(audio.duration)});
+ audio.addEventListener('timeupdate',()=>{if(audio.duration){seek.value=audio.currentTime/audio.duration*1000;currentEl.textContent=fmt(audio.currentTime)}});
+ seek.addEventListener('input',()=>{if(audio.duration)audio.currentTime=Number(seek.value)/1000*audio.duration});
+ audio.addEventListener('ended',()=>{if(repeat){audio.currentTime=0;audio.play()}else if(current<tracks.length-1||shuffle)next();else{document.getElementById('play').textContent='▶'}});
+ // Object URLs cannot survive a page reload. The order is preserved for the current session;
+ // users can reselect their files after reopening the page.
+ render();
+})();
+</script>
+</body>
+</html>
