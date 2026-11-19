@@ -100,7 +100,7 @@ class MainActivity : ComponentActivity() {
             setTextColor(white)
             gravity = Gravity.CENTER
             maxLines = 2
-            setPadding(8.dp(), 8.dp(), 8.dp(), 4.dp)
+            setPadding(8.dp(), 8.dp(), 8.dp(), 4.dp())
         }
         root.addView(title)
         seek = SeekBar(this).apply {
