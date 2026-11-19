@@ -100,7 +100,7 @@ class MainActivity : ComponentActivity() {
         val add = button("＋  ADICIONAR MÚSICAS", cyan) { picker.launch(arrayOf("audio/*")) }
         root.addView(add, LinearLayout.LayoutParams(-1, 54.dp()).apply { topMargin = 24.dp() })
         val creator = TextView(this).apply {
-            text = "desenvolvido por Genival Moreira"
+            text = "desenvolvido por Genival"
             textSize = 11f
             setTextColor(muted)
             gravity = Gravity.CENTER
