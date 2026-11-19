@@ -32,6 +32,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var play: Button
     private lateinit var songsContainer: LinearLayout
     private val selectedUris = mutableListOf<Uri>()
+    private val prefs by lazy { getSharedPreferences("neon_pulse_library", MODE_PRIVATE) }
+    private val savedUrisKey = "selected_audio_uris"
     private val cyan = Color.rgb(0, 229, 255)
     private val pink = Color.rgb(255, 40, 215)
     private val white = Color.rgb(244, 247, 255)
@@ -43,6 +45,7 @@ class MainActivity : ComponentActivity() {
                 runCatching { contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) }
                 if (!selectedUris.contains(uri)) selectedUris.add(uri)
             }
+            saveSelectedUris()
             renderSongList()
             val player = controller
             if (player != null) {
@@ -60,6 +63,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         window.statusBarColor = Color.rgb(8, 8, 20)
         window.navigationBarColor = Color.rgb(8, 8, 20)
+        restoreSelectedUris()
         buildScreen()
         connectPlayer()
     }
@@ -157,6 +161,22 @@ class MainActivity : ComponentActivity() {
             override fun onStopTrackingTouch(bar: SeekBar?) {}
         })
         renderSongList()
+    }
+
+    private fun saveSelectedUris() {
+        prefs.edit().putStringSet(savedUrisKey, selectedUris.map { it.toString() }.toSet()).apply()
+    }
+
+    private fun restoreSelectedUris() {
+        selectedUris.clear()
+        val saved = prefs.getStringSet(savedUrisKey, emptySet())?.toList().orEmpty()
+        saved.forEach { value ->
+            val uri = runCatching { Uri.parse(value) }.getOrNull() ?: return@forEach
+            val hasPermission = contentResolver.persistedUriPermissions.any { it.uri == uri && it.isReadPermission }
+            if (hasPermission) selectedUris.add(uri)
+        }
+        // Remove entries whose document access was revoked or is no longer available.
+        if (selectedUris.size != saved.size) saveSelectedUris()
     }
 
     private fun renderSongList() {
