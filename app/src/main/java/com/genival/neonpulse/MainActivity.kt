@@ -6,23 +6,21 @@ import android.graphics.Typeface
 import android.net.Uri
 import android.os.Bundle
 import android.view.Gravity
-import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
+import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
-import android.app.Activity
 import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
-import java.util.concurrent.TimeUnit
 
-class MainActivity : Activity() {
+class MainActivity : ComponentActivity() {
     private var controller: MediaController? = null
     private var controllerFuture: ListenableFuture<MediaController>? = null
     private lateinit var status: TextView
@@ -167,7 +165,8 @@ class MainActivity : Activity() {
     override fun onDestroy() {
         controller?.release()
         controller = null
-        MediaController.releaseFuture(controllerFuture)
+        controllerFuture?.let { MediaController.releaseFuture(it) }
+        controllerFuture = null
         super.onDestroy()
     }
 }
