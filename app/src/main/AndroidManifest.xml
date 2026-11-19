@@ -5,8 +5,8 @@
     <application
         android:allowBackup="true"
         android:label="Neon Pulse"
-        android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher"
+        android:icon="@drawable/ic_neon_logo"
+        android:roundIcon="@drawable/ic_neon_logo"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity android:name=".MainActivity" android:exported="true">
