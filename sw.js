@@ -1,5 +1,5 @@
-const CACHE_NAME = "neon-pulse-v2";
-const ASSETS = ["./", "./index.html", "./neon_pulse_music.html", "./manifest.json", "./icon.svg"];
+const CACHE_NAME = "neon-pulse-v3";
+const ASSETS = ["./", "./index.html", "./neon_pulse_music.html", "./manifest.json", "./icon-192.png"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
